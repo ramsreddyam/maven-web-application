@@ -1,0 +1,33 @@
+node{
+
+def mavenHome = tool name:"3.6.3" 
+
+stage('CheckoutCode'){
+git branch: 'development', credentialsId: '2b1d53fa-13fb-4bce-a801-040dea384d02', url: 'https://github.com/ramsreddyam/maven-web-application.git'
+}
+stage('Build'){
+ sh "${mavenHome}/bin/mvn clean package"
+}
+stage('ExecuteSonarQubeReport'){
+ sh "${mavenHome}/bin/mvn sonar:sonar"
+}
+stage('UploadArtifactIntoNexus'){
+ sh "${mavenHome}/bin/mvn clean deploy"
+}
+stage('DeployIntoTomcat'){
+sshagent(['8ed1e134-0b77-40f9-b00a-42256fd131bf']) {
+ sh "scp -o  StrictHostKeyChecking=no target/maven-web-application.war ec2-user@3.137.208.176:/opt/apache-tomcat-9.0.48/webapps"  
+}
+}
+stage('SendEmailNotification'){
+emailext body: '''Build has created and deployed into Tomcat
+
+
+Regards,
+Ramana''', subject: 'Build success', to: 'reddyam1995@gmail.com'
+}
+stage('Build Trigger by poll SCM'){
+properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '5', daysToKeepStr: '5', numToKeepStr: '5')), pipelineTriggers([pollSCM('* * * * *')])])
+}
+
+}
