@@ -1,0 +1,73 @@
+pipeline{
+
+agent any
+
+triggers{
+ pollSCM('* * * * *')
+}
+
+options{
+timestamps()
+buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '5', daysToKeepStr: '', numToKeepStr: '5'))
+}
+
+tools{
+maven "maven3.6.3"
+}
+
+stages{
+
+ stage('CheckoutCode'){
+ steps{
+   git branch: 'development', credentialsId: '2b1d53fa-13fb-4bce-a801-040dea384d02', url: 'https://github.com/ramsreddyam/maven-web-application.git'
+ }
+ }
+ 
+ stage('Build'){
+  steps{
+  sh "mvn clean package"
+  }
+ }
+
+/*
+  stage('ExecuteSonarQubeReport'){
+  steps{
+  sh "mvn clean sonar:sonar"
+  }
+ }
+ 
+ stage('UploadArtifactIntoNexus'){
+  steps{
+  sh "mvn clean deploy"
+  }
+ }
+ /*stage('DeployAppIntoTomcatServer'){
+  steps{
+   sshagent(['c00595ae-6d80-4938-a41e-cf3c55674816']) {
+    sh "scp -o  StrictHostKeyChecking=no target/maven-web-application.war ec2-user@3.137.208.176:/opt/apache-tomcat-9.0.48/webapps"  
+   }
+  }
+ }
+*/
+
+}//Stages Closing
+
+/*post{
+
+ success{
+ emailext body: '''Build is Over - Success!!
+
+ Regards,
+ Mithun Technologies,
+ 9980923226''', subject: 'Build is Over - Scuess!!', to: 'devopstrainingblr@gmail.com'
+ }
+ failure{
+ emailext body: '''Build is Over - Failed!!
+
+ Regards,
+ Mithun Technologies,
+ 9980923226''', subject: 'Build is Over - Failed!!', to: 'devopstrainingblr@gmail.com'
+ }
+ 
+}*/
+}
